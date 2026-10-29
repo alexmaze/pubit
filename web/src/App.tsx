@@ -40,7 +40,7 @@ export function App() {
           element={
             authed ? (
               <AppShell baseUrl={baseUrl} onLogout={logout}>
-                <Sites />
+                <Sites baseUrl={baseUrl} />
               </AppShell>
             ) : (
               <Navigate to="/login" replace />

@@ -26,12 +26,14 @@ export function SharingSheet({
   open,
   onOpenChange,
   onChange,
+  onDeleted,
 }: {
   site: Site;
   baseUrl: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onChange: (site: Site) => void;
+  onDeleted?: () => void;
 }) {
   const nav = useNavigate();
   const [name, setName] = useState(site.name);
@@ -201,7 +203,9 @@ export function SharingSheet({
               onClick={() => {
                 void api.deleteSite(site.slug).then(() => {
                   toast.success("Site deleted");
-                  nav("/");
+                  onOpenChange(false);
+                  if (onDeleted) onDeleted();
+                  else nav("/");
                 });
               }}
             >

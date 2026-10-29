@@ -1,9 +1,10 @@
-import { Copy, Download, ExternalLink, FolderPlus, FilePlus, Settings2, Trash2, Upload } from "lucide-react";
+import { ArchiveRestore, Copy, Download, ExternalLink, FilePlus, FolderPlus, Settings2, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { FileInspector } from "@/components/FileInspector";
 import { FileTree } from "@/components/FileTree";
+import { IconTipButton } from "@/components/IconTipButton";
 import { PromptDialog } from "@/components/PromptDialog";
 import { SharingSheet } from "@/components/SharingSheet";
 import { SiteFlags } from "@/components/StatusBadges";
@@ -161,29 +162,25 @@ export function SiteDetail({ baseUrl }: { baseUrl: string }) {
             if (e.dataTransfer.files.length) void handleFiles(e.dataTransfer.files).catch((err) => toast.error(err.message));
           }}
         >
-          <div className="flex flex-wrap items-center gap-1 border-b px-2 py-2">
-            <Button size="sm" variant="ghost" onClick={() => setNewFile(true)}>
+          <div className="flex h-10 shrink-0 items-center justify-end gap-0.5 border-b px-1.5">
+            <IconTipButton label="New file" onClick={() => setNewFile(true)}>
               <FilePlus />
-              File
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setNewFolder(true)}>
+            </IconTipButton>
+            <IconTipButton label="New folder" onClick={() => setNewFolder(true)}>
               <FolderPlus />
-              Folder
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => uploadRef.current?.click()}>
+            </IconTipButton>
+            <IconTipButton label="Upload files" onClick={() => uploadRef.current?.click()}>
               <Upload />
-              Upload
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => zipRef.current?.click()}>
-              Import
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => void exportZip()}>
+            </IconTipButton>
+            <IconTipButton label="Import ZIP" onClick={() => zipRef.current?.click()}>
+              <ArchiveRestore />
+            </IconTipButton>
+            <IconTipButton label="Export ZIP" onClick={() => void exportZip()}>
               <Download />
-              Export
-            </Button>
-            <Button size="icon" variant="ghost" disabled={!selected} onClick={() => selected && setDeletePath(selected)}>
+            </IconTipButton>
+            <IconTipButton label="Delete" disabled={!selected} onClick={() => selected && setDeletePath(selected)}>
               <Trash2 />
-            </Button>
+            </IconTipButton>
           </div>
           <div className="flex flex-wrap items-center gap-1 border-b px-3 py-1.5 text-[11px] text-muted-foreground">
             <button type="button" className="hover:text-foreground" onClick={() => { setDir(""); setSelected(null); }}>

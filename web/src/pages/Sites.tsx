@@ -1,21 +1,24 @@
-import { Copy, ExternalLink, FolderKanban, HardDrive, MoreHorizontal, Search } from "lucide-react";
+import { Copy, ExternalLink, FolderKanban, HardDrive, MoreHorizontal, Search, Settings2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { NewSiteDialog } from "@/components/NewSiteDialog";
+import { SharingSheet } from "@/components/SharingSheet";
 import { SiteFlags } from "@/components/StatusBadges";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiError, type Site, api } from "@/lib/api";
 import { copyText, formatBytes, formatRelative, shareUrl } from "@/lib/utils";
 
-export function Sites() {
+export function Sites({ baseUrl }: { baseUrl: string }) {
   const nav = useNavigate();
   const [sites, setSites] = useState<Site[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [sharing, setSharing] = useState<Site | null>(null);
 
   async function load() {
     try {
@@ -114,6 +117,15 @@ export function Sites() {
                   >
                     <Copy />
                   </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="outline" onClick={() => setSharing(site)}>
+                        <Settings2 />
+                        <span className="sr-only">Sharing settings</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Sharing settings</TooltipContent>
+                  </Tooltip>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button size="icon" variant="ghost">
@@ -122,6 +134,7 @@ export function Sites() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => nav(`/sites/${site.slug}`)}>Open workspace</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSharing(site)}>Sharing settings</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => void copyText(site.dav_url).then(() => toast.success("WebDAV copied"))}>
                         Copy WebDAV
                       </DropdownMenuItem>
@@ -138,6 +151,24 @@ export function Sites() {
       )}
 
       <NewSiteDialog open={open} onOpenChange={setOpen} />
+      {sharing && (
+        <SharingSheet
+          site={sharing}
+          baseUrl={baseUrl}
+          open
+          onOpenChange={(v) => {
+            if (!v) setSharing(null);
+          }}
+          onChange={(next) => {
+            setSharing(next);
+            setSites((list) => list.map((item) => (item.slug === next.slug ? next : item)));
+          }}
+          onDeleted={() => {
+            setSharing(null);
+            void load();
+          }}
+        />
+      )}
     </div>
   );
 }

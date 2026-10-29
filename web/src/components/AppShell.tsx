@@ -3,6 +3,7 @@ import { ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AgentSetup } from "@/components/AgentSetup";
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 
 export function AppShell({
@@ -22,11 +23,8 @@ export function AppShell({
     <div className={full ? "flex h-screen flex-col overflow-hidden bg-muted/30" : "min-h-screen bg-muted/30"}>
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-xs font-semibold text-background">
-              p
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight">pubit</span>
+          <Link to="/" className="rounded-md outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <BrandMark />
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setSetup(true)}>

@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,12 +31,10 @@ export function Login() {
   return (
     <div className="login-canvas flex min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-sm border-border/80 shadow-lg">
-        <CardHeader className="space-y-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-semibold text-background">
-            p
-          </div>
+        <CardHeader className="space-y-4">
+          <BrandMark size={36} />
           <div>
-            <CardTitle className="text-2xl tracking-tight">pubit</CardTitle>
+            <CardTitle className="text-xl tracking-tight">Welcome back</CardTitle>
             <CardDescription>Sign in to publish and manage static sites.</CardDescription>
           </div>
         </CardHeader>
