@@ -32,6 +32,21 @@ go run ./cmd/pubit
 
 ## Docker
 
+主干推送会自动发 tag 并推多架构镜像到 `ghcr.io/alexmaze/pubit:latest`（以及 `:v0.1.x`）。
+
+直接用镜像跑：
+
+```bash
+docker run -d --name pubit -p 8080:8080 -v pubit-data:/data \
+  -e PUBIT_BASE_URL=https://pubit.example.com \
+  -e PUBIT_ADMIN_USER=admin \
+  -e PUBIT_ADMIN_PASSWORD=your-password \
+  -e PUBIT_AGENT_TOKEN=your-agent-token \
+  ghcr.io/alexmaze/pubit:latest
+```
+
+本地源码构建：
+
 ```bash
 export PUBIT_ADMIN_PASSWORD=admin
 export PUBIT_AGENT_TOKEN=change-me
