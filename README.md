@@ -1,10 +1,55 @@
-# pubit
+# Pubit
 
-给个人 AI Agent 用的单人静态站点托管。每个站点是一个目录；Agent 用 REST 管站点、用 WebDAV 管文件。管理后台在 `/admin`。
+给个人 AI Agent 用的静态站点托管。单二进制、自带管理后台与 SQLite：Agent 通过 **REST API** 建站/改配置，通过 **WebDAV** 或 **ZIP** 传文件，跑完直接拿到可分享的站点地址与短链。
 
-## 本地运行
+![Sites 列表](docs/images/sites.png)
 
-需要 Go 1.24+ 和 Node 22。
+## 特性
+
+- **目录即站点**：每个 `slug` 对应独立目录，只托管静态产物，路径严格锁在站点内
+- **Agent 原生协议**：`Bearer` 调 REST 管理站点，WebDAV（`agent` + token）读写文件，或一键导入整个构建 ZIP
+- **分享控制**：独立密码解锁页、自动或自定义短链 `/s/{code}`、HTTP 一键上下线（Offline 时 WebDAV 仍可写）、SPA `index.html` 回退
+- **内置工作台 `/admin`**：文件树、拖拽上传/解压、在线改代码、桌面/手机实时预览
+- **零外部依赖**：Go 单二进制 `go:embed` 前端与 `SKILL.md`；容器只听 `:8080`，HTTPS 交给前面的 Caddy / Nginx
+
+| 站点工作台与实时预览 | 在线编辑 |
+| --- | --- |
+| ![Workspace](docs/images/workspace.png) | ![Editor](docs/images/editor.png) |
+
+| 访问控制与短链抽屉 | 访客密码解锁页 |
+| --- | --- |
+| ![Sharing](docs/images/sharing.png) | ![Password Unlock](docs/images/password-unlock.png) |
+
+## 快速开始
+
+### 1. Docker（推荐）
+
+主干推送会自动构建 `linux/amd64` + `linux/arm64` 镜像到 `ghcr.io/alexmaze/pubit:latest`：
+
+```bash
+docker run -d --name pubit \
+  -p 8080:8080 \
+  -v pubit-data:/data \
+  -e PUBIT_BASE_URL=https://pubit.example.com \
+  -e PUBIT_ADMIN_USER=admin \
+  -e PUBIT_ADMIN_PASSWORD=your-password \
+  -e PUBIT_AGENT_TOKEN=your-agent-token \
+  ghcr.io/alexmaze/pubit:latest
+```
+
+或使用仓库里的 `docker-compose.yml`：
+
+```bash
+export PUBIT_ADMIN_PASSWORD=your-password
+export PUBIT_AGENT_TOKEN=your-agent-token
+docker compose up -d --build
+```
+
+打开 `http://localhost:8080/admin` 登录后台。
+
+### 2. 本地源码运行
+
+需要 Go 1.24+ 与 Node 22：
 
 ```bash
 cd web && npm ci && npm run build && cd ..
@@ -15,72 +60,62 @@ export PUBIT_BASE_URL=http://localhost:8080
 go run ./cmd/pubit
 ```
 
-打开 http://localhost:8080/admin （默认 `admin` / `admin`）。
+## 环境变量
 
-环境变量：
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `PUBIT_LISTEN` | `:8080` | HTTP 监听地址 |
+| `PUBIT_DATA` | `./data` | 数据目录（存 `pubit.db` 与 `sites/{slug}/`） |
+| `PUBIT_BASE_URL` | `http://localhost:8080` | 实例对外地址（无尾斜杠，用于拼接返回的分享链接） |
+| `PUBIT_ADMIN_USER` | `admin` | 管理后台用户名 |
+| `PUBIT_ADMIN_PASSWORD` | `admin` | 管理后台密码 |
+| `PUBIT_AGENT_TOKEN` | `change-me` | Agent 调 REST 与 WebDAV 的共用口令 |
 
-| 变量 | 默认 | 含义 |
-|------|------|------|
-| `PUBIT_LISTEN` | `:8080` | 监听地址 |
-| `PUBIT_DATA` | `./data` | SQLite 与站点文件目录 |
-| `PUBIT_BASE_URL` | `http://localhost:8080` | 返回给 Agent 的对外地址 |
-| `PUBIT_ADMIN_USER` | `admin` | 后台用户名 |
-| `PUBIT_ADMIN_PASSWORD` | `admin` | 后台密码 |
-| `PUBIT_AGENT_TOKEN` | `change-me` | Agent REST / WebDAV 口令 |
+## 安装 Agent Skill
 
-容器只听 HTTP。HTTPS 交给前面的 Caddy / nginx。
-
-## Docker
-
-主干推送会自动发 tag 并推多架构镜像到 `ghcr.io/alexmaze/pubit:latest`（以及 `:v0.1.x`）。
-
-直接用镜像跑：
-
-```bash
-docker run -d --name pubit -p 8080:8080 -v pubit-data:/data \
-  -e PUBIT_BASE_URL=https://pubit.example.com \
-  -e PUBIT_ADMIN_USER=admin \
-  -e PUBIT_ADMIN_PASSWORD=your-password \
-  -e PUBIT_AGENT_TOKEN=your-agent-token \
-  ghcr.io/alexmaze/pubit:latest
-```
-
-本地源码构建：
-
-```bash
-export PUBIT_ADMIN_PASSWORD=admin
-export PUBIT_AGENT_TOKEN=change-me
-docker compose up --build
-```
-
-数据卷挂在 `/data`，端口 `8080`。
-
-## 安装 skill
-
-把 `skill/SKILL.md` 拷到本机 Cursor skills 目录，例如：
+从已运行的实例直接拉取（或拷贝仓库内的 `skill/SKILL.md`）：
 
 ```bash
 mkdir -p ~/.cursor/skills/pubit
-cp skill/SKILL.md ~/.cursor/skills/pubit/SKILL.md
+curl -fsS "$PUBIT_BASE_URL/skill.md" -o ~/.cursor/skills/pubit/SKILL.md
 ```
 
-或从已运行的实例拉取同一份文件：
+也可以在后台右上角点 **Agent Setup** 一键复制安装命令。
+
+Agent 触发该 skill 时会先检查环境变量（或 `.env`）里的 `PUBIT_BASE_URL` 和 `PUBIT_AGENT_TOKEN`；缺任一项会先停下来询问你，确认 `/api/health` 正常后再执行发布。
+
+## 路由与接口速查
+
+| 路径 | 说明 |
+| --- | --- |
+| `/admin` | 管理后台 SPA |
+| `/api/health` | 探活，返回 `{"ok":true}` |
+| `/api/sites` | `GET` 列表 / `POST` 创建站点（冲突返回 `409`） |
+| `/api/sites/{slug}` | `GET` 详情 / `PATCH` 改名、短链、密码、HTTP、SPA / `DELETE` 删除 |
+| `/api/sites/{slug}/import` | `POST` 上传并解压整站 ZIP |
+| `/api/sites/{slug}/export` | `GET` 导出整站 ZIP |
+| `/dav/{slug}/` | 站点 WebDAV 根目录（Basic 用户名 `agent`，密码 `PUBIT_AGENT_TOKEN`） |
+| `/{slug}/...` | 公开站点访问（Offline 返回 `404`；有密码时展示独立解锁页） |
+| `/s/{code}` | 短链，`302` 跳转到 `/{slug}/` |
+| `/skill.md` | 原样返回 `skill/SKILL.md` |
+
+> 保留名：`admin`、`api`、`dav`、`s` 不能作为站点 `slug`。
+
+### 最小命令示例
 
 ```bash
-curl -sS "$PUBIT_BASE_URL/skill.md" -o ~/.cursor/skills/pubit/SKILL.md
-```
-
-Agent 会先核对 `PUBIT_BASE_URL` 和 `PUBIT_AGENT_TOKEN`，缺了会停下来问你。
-
-## Agent 示例
-
-```bash
-curl -sS -X POST "$PUBIT_BASE_URL/api/sites" \
+# 1. 创建站点
+curl -fsS -X POST "$PUBIT_BASE_URL/api/sites" \
   -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"slug":"hello","name":"Hello"}'
 
-curl -sS -u "agent:$PUBIT_AGENT_TOKEN" -T index.html "$PUBIT_BASE_URL/dav/hello/index.html"
-```
+# 2. 通过 WebDAV 上传文件
+curl -fsS -u "agent:$PUBIT_AGENT_TOKEN" -T index.html "$PUBIT_BASE_URL/dav/hello/index.html"
 
-公开地址：`$PUBIT_BASE_URL/hello/`，短链：`$PUBIT_BASE_URL/s/{code}`。
+# 3. 或直接导入构建产物目录
+(cd dist && zip -qr /tmp/site.zip .)
+curl -fsS -X POST "$PUBIT_BASE_URL/api/sites/hello/import" \
+  -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
+  -F "file=@/tmp/site.zip"
+```

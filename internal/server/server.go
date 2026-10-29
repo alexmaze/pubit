@@ -136,7 +136,8 @@ func (s *Server) adminHandler() http.Handler {
 			writeErr(w, http.StatusInternalServerError, "admin ui missing")
 		})
 	}
-	fileServer := http.FileServer(http.FS(sub))
+	indexHTML, _ := fs.ReadFile(sub, "index.html")
+	fileServer := http.StripPrefix("/admin", http.FileServer(http.FS(sub)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := strings.TrimPrefix(r.URL.Path, "/admin")
 		if p == "" {
@@ -144,17 +145,18 @@ func (s *Server) adminHandler() http.Handler {
 			return
 		}
 		if p == "/" {
-			p = "/index.html"
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(indexHTML)
+			return
 		}
 		f, err := sub.Open(strings.TrimPrefix(p, "/"))
 		if err != nil {
-			r2 := r.Clone(r.Context())
-			r2.URL.Path = "/index.html"
-			http.StripPrefix("/admin", fileServer).ServeHTTP(w, r2)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(indexHTML)
 			return
 		}
 		f.Close()
-		http.StripPrefix("/admin", fileServer).ServeHTTP(w, r)
+		fileServer.ServeHTTP(w, r)
 	})
 }
 
