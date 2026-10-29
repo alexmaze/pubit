@@ -20,13 +20,14 @@ If **either is missing, stop**. Ask the user how they want to configure this ins
 - `PUBIT_BASE_URL`: public origin of the Pubit instance, including scheme, no trailing slash (for example `https://pubit.example.com`)
 - `PUBIT_AGENT_TOKEN`: the same token the server was started with (`PUBIT_AGENT_TOKEN`)
 
-After the user provides both, ask them to put the values in the environment or a local `.env`. Confirm the instance is reachable:
+After the user provides both, ask them to put the values in the environment or a local `.env`. Confirm the instance is reachable and the token is valid:
 
 ```bash
 curl -fsS "$PUBIT_BASE_URL/api/health"
+curl -fsS "$PUBIT_BASE_URL/api/sites" -H "Authorization: Bearer $PUBIT_AGENT_TOKEN"
 ```
 
-Expect `{"ok":true}`. Only then continue.
+Expect `{"ok":true}` and a `200` JSON response. Only then continue.
 
 REST auth header: `Authorization: Bearer $PUBIT_AGENT_TOKEN`.
 

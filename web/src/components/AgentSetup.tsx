@@ -22,7 +22,10 @@ export function AgentSetup({
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   const skillUrl = `${baseUrl}/skill.md`;
-  const prompt = `Install the Pubit skill from ${skillUrl} into your skills directory and configure PUBIT_BASE_URL=${baseUrl} (plus PUBIT_AGENT_TOKEN).`;
+  const prompt = [
+    `Install the Pubit skill from ${skillUrl} into your skills directory.`,
+    `Then guide me to configure PUBIT_BASE_URL=${baseUrl} and PUBIT_AGENT_TOKEN in my shell environment or local .env (ask me for the token or where to save it — do not guess it), and verify access against ${baseUrl}/api/sites.`,
+  ].join(" ");
 
   async function copyToken() {
     await copyText(agentToken);

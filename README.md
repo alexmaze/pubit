@@ -75,14 +75,9 @@ go run ./cmd/pubit
 
 ## Install the Agent Skill
 
-Fetch `skill.md` from a running instance (or copy `skill/SKILL.md` from this repo):
+Open **Agent Setup** in the top bar of `/admin`, copy the setup prompt, and send it to your agent:
 
-```bash
-mkdir -p ~/.cursor/skills/pubit
-curl -fsS "$PUBIT_BASE_URL/skill.md" -o ~/.cursor/skills/pubit/SKILL.md
-```
-
-You can also copy the install command from **Agent Setup** in the top bar of `/admin`.
+> Install the Pubit skill from `<PUBIT_BASE_URL>/skill.md` into your skills directory. Then guide me to configure `PUBIT_BASE_URL=<PUBIT_BASE_URL>` and `PUBIT_AGENT_TOKEN` in my shell environment or local `.env` (ask me for the token or where to save it — do not guess it), and verify access against `<PUBIT_BASE_URL>/api/sites`.
 
 When invoked, the skill checks `PUBIT_BASE_URL` and `PUBIT_AGENT_TOKEN` in the environment (or local `.env`) first. If either is missing, the agent stops and asks before continuing.
 

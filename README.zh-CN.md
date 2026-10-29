@@ -75,14 +75,9 @@ go run ./cmd/pubit
 
 ## 安装 Agent Skill
 
-从已运行的实例直接拉取（或拷贝仓库内的 `skill/SKILL.md`）：
+打开后台右上角的 **Agent Setup**，一键复制安装提示词直接发给你的 Agent：
 
-```bash
-mkdir -p ~/.cursor/skills/pubit
-curl -fsS "$PUBIT_BASE_URL/skill.md" -o ~/.cursor/skills/pubit/SKILL.md
-```
-
-也可以在后台右上角点 **Agent Setup** 一键复制安装命令。
+> Install the Pubit skill from `<PUBIT_BASE_URL>/skill.md` into your skills directory. Then guide me to configure `PUBIT_BASE_URL=<PUBIT_BASE_URL>` and `PUBIT_AGENT_TOKEN` in my shell environment or local `.env` (ask me for the token or where to save it — do not guess it), and verify access against `<PUBIT_BASE_URL>/api/sites`.
 
 Agent 触发该 skill 时会先检查环境变量（或 `.env`）里的 `PUBIT_BASE_URL` 和 `PUBIT_AGENT_TOKEN`；缺任一项会先停下来询问你，确认 `/api/health` 正常后再执行发布。
 
