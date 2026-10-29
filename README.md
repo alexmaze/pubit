@@ -1,30 +1,32 @@
 # Pubit
 
-给个人 AI Agent 用的静态站点托管。单二进制、自带管理后台与 SQLite：Agent 通过 **REST API** 建站/改配置，通过 **WebDAV** 或 **ZIP** 传文件，跑完直接拿到可分享的站点地址与短链。
+**English** | [简体中文](README.zh-CN.md)
 
-![Sites 列表](docs/images/sites.png)
+Personal static web hosting for AI agents. Single Go binary with an embedded React admin and SQLite: agents create and configure sites over **REST**, upload files over **WebDAV** or **ZIP**, and return shareable URLs and short links.
 
-## 特性
+![Sites dashboard](docs/images/sites.png)
 
-- **目录即站点**：每个 `slug` 对应独立目录，只托管静态产物，路径严格锁在站点内
-- **Agent 原生协议**：`Bearer` 调 REST 管理站点，WebDAV（`agent` + token）读写文件，或一键导入整个构建 ZIP
-- **分享控制**：独立密码解锁页、自动或自定义短链 `/s/{code}`、HTTP 一键上下线（Offline 时 WebDAV 仍可写）、SPA `index.html` 回退
-- **内置工作台 `/admin`**：文件树、拖拽上传/解压、在线改代码、桌面/手机实时预览
-- **零外部依赖**：Go 单二进制 `go:embed` 前端与 `SKILL.md`；容器只听 `:8080`，HTTPS 交给前面的 Caddy / Nginx
+## Features
 
-| 站点工作台与实时预览 | 在线编辑 |
+- **Directory-isolated sites** — each `slug` maps to `sites/{slug}/`; paths stay inside the site root (`..` is rejected).
+- **Agent-native protocols** — `Bearer` token for the JSON API, HTTP Basic (`agent` + token) for WebDAV, or one-shot ZIP import/export.
+- **Sharing controls** — standalone password unlock page, auto or custom short links (`/s/{code}`), one-click HTTP toggle (WebDAV still works while Offline), and SPA `index.html` fallback.
+- **Built-in `/admin` workspace** — file tree, drag-and-drop upload/ZIP extract, inline code editor (`⌘S`), and desktop/mobile live preview.
+- **Single binary** — frontend and `skill/SKILL.md` are embedded via `go:embed`. Listens on HTTP `:8080`; put Caddy or Nginx in front for HTTPS.
+
+| Workspace & live preview | Inline editor |
 | --- | --- |
 | ![Workspace](docs/images/workspace.png) | ![Editor](docs/images/editor.png) |
 
-| 访问控制与短链抽屉 | 访客密码解锁页 |
+| Access & sharing drawer | Visitor password page |
 | --- | --- |
 | ![Sharing](docs/images/sharing.png) | ![Password Unlock](docs/images/password-unlock.png) |
 
-## 快速开始
+## Quick Start
 
-### 1. Docker（推荐）
+### 1. Docker (recommended)
 
-主干推送会自动构建 `linux/amd64` + `linux/arm64` 镜像到 `ghcr.io/alexmaze/pubit:latest`：
+Pushes to `main` publish multi-arch (`linux/amd64`, `linux/arm64`) images to `ghcr.io/alexmaze/pubit:latest`:
 
 ```bash
 docker run -d --name pubit \
@@ -37,7 +39,7 @@ docker run -d --name pubit \
   ghcr.io/alexmaze/pubit:latest
 ```
 
-或使用仓库里的 `docker-compose.yml`：
+Or with `docker-compose.yml`:
 
 ```bash
 export PUBIT_ADMIN_PASSWORD=your-password
@@ -45,11 +47,11 @@ export PUBIT_AGENT_TOKEN=your-agent-token
 docker compose up -d --build
 ```
 
-打开 `http://localhost:8080/admin` 登录后台。
+Open `http://localhost:8080/admin` to sign in.
 
-### 2. 本地源码运行
+### 2. From Source
 
-需要 Go 1.24+ 与 Node 22：
+Requires Go 1.24+ and Node 22:
 
 ```bash
 cd web && npm ci && npm run build && cd ..
@@ -60,60 +62,60 @@ export PUBIT_BASE_URL=http://localhost:8080
 go run ./cmd/pubit
 ```
 
-## 环境变量
+## Environment Variables
 
-| 变量 | 默认值 | 说明 |
+| Variable | Default | Description |
 | --- | --- | --- |
-| `PUBIT_LISTEN` | `:8080` | HTTP 监听地址 |
-| `PUBIT_DATA` | `./data` | 数据目录（存 `pubit.db` 与 `sites/{slug}/`） |
-| `PUBIT_BASE_URL` | `http://localhost:8080` | 实例对外地址（无尾斜杠，用于拼接返回的分享链接） |
-| `PUBIT_ADMIN_USER` | `admin` | 管理后台用户名 |
-| `PUBIT_ADMIN_PASSWORD` | `admin` | 管理后台密码 |
-| `PUBIT_AGENT_TOKEN` | `change-me` | Agent 调 REST 与 WebDAV 的共用口令 |
+| `PUBIT_LISTEN` | `:8080` | HTTP listen address |
+| `PUBIT_DATA` | `./data` | Data directory (`pubit.db` and `sites/{slug}/`) |
+| `PUBIT_BASE_URL` | `http://localhost:8080` | Public origin (no trailing slash) used in returned URLs |
+| `PUBIT_ADMIN_USER` | `admin` | Admin UI username |
+| `PUBIT_ADMIN_PASSWORD` | `admin` | Admin UI password |
+| `PUBIT_AGENT_TOKEN` | `change-me` | Shared token for Agent REST and WebDAV |
 
-## 安装 Agent Skill
+## Install the Agent Skill
 
-从已运行的实例直接拉取（或拷贝仓库内的 `skill/SKILL.md`）：
+Fetch `skill.md` from a running instance (or copy `skill/SKILL.md` from this repo):
 
 ```bash
 mkdir -p ~/.cursor/skills/pubit
 curl -fsS "$PUBIT_BASE_URL/skill.md" -o ~/.cursor/skills/pubit/SKILL.md
 ```
 
-也可以在后台右上角点 **Agent Setup** 一键复制安装命令。
+You can also copy the install command from **Agent Setup** in the top bar of `/admin`.
 
-Agent 触发该 skill 时会先检查环境变量（或 `.env`）里的 `PUBIT_BASE_URL` 和 `PUBIT_AGENT_TOKEN`；缺任一项会先停下来询问你，确认 `/api/health` 正常后再执行发布。
+When invoked, the skill checks `PUBIT_BASE_URL` and `PUBIT_AGENT_TOKEN` in the environment (or local `.env`) first. If either is missing, the agent stops and asks before continuing.
 
-## 路由与接口速查
+## Routes & API
 
-| 路径 | 说明 |
+| Path | Description |
 | --- | --- |
-| `/admin` | 管理后台 SPA |
-| `/api/health` | 探活，返回 `{"ok":true}` |
-| `/api/sites` | `GET` 列表 / `POST` 创建站点（冲突返回 `409`） |
-| `/api/sites/{slug}` | `GET` 详情 / `PATCH` 改名、短链、密码、HTTP、SPA / `DELETE` 删除 |
-| `/api/sites/{slug}/import` | `POST` 上传并解压整站 ZIP |
-| `/api/sites/{slug}/export` | `GET` 导出整站 ZIP |
-| `/dav/{slug}/` | 站点 WebDAV 根目录（Basic 用户名 `agent`，密码 `PUBIT_AGENT_TOKEN`） |
-| `/{slug}/...` | 公开站点访问（Offline 返回 `404`；有密码时展示独立解锁页） |
-| `/s/{code}` | 短链，`302` 跳转到 `/{slug}/` |
-| `/skill.md` | 原样返回 `skill/SKILL.md` |
+| `/admin` | Admin SPA |
+| `/api/health` | Health check (`{"ok":true}`) |
+| `/api/sites` | `GET` list / `POST` create site (`409` on slug or short code conflict) |
+| `/api/sites/{slug}` | `GET` detail / `PATCH` name, short code, password, HTTP, SPA / `DELETE` site |
+| `/api/sites/{slug}/import` | `POST` upload and extract a site ZIP |
+| `/api/sites/{slug}/export` | `GET` download the site as a ZIP |
+| `/dav/{slug}/` | Site WebDAV root (Basic user `agent`, password `PUBIT_AGENT_TOKEN`) |
+| `/{slug}/...` | Public static files (`404` when Offline; password page when protected) |
+| `/s/{code}` | Short link (`302` to `/{slug}/`) |
+| `/skill.md` | Serves `skill/SKILL.md` |
 
-> 保留名：`admin`、`api`、`dav`、`s` 不能作为站点 `slug`。
+> Reserved slugs: `admin`, `api`, `dav`, `s`.
 
-### 最小命令示例
+### Minimal curl Example
 
 ```bash
-# 1. 创建站点
+# 1. Create a site
 curl -fsS -X POST "$PUBIT_BASE_URL/api/sites" \
   -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"slug":"hello","name":"Hello"}'
 
-# 2. 通过 WebDAV 上传文件
+# 2. Upload a file via WebDAV
 curl -fsS -u "agent:$PUBIT_AGENT_TOKEN" -T index.html "$PUBIT_BASE_URL/dav/hello/index.html"
 
-# 3. 或直接导入构建产物目录
+# 3. Or import a build directory as a ZIP
 (cd dist && zip -qr /tmp/site.zip .)
 curl -fsS -X POST "$PUBIT_BASE_URL/api/sites/hello/import" \
   -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
