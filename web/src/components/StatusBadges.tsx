@@ -14,7 +14,7 @@ export function LiveStatus({ site, className }: { site: Site; className?: string
   }
   return (
     <Badge variant="secondary" className={cn("font-normal", className)}>
-      HTTP disabled
+      Offline
     </Badge>
   );
 }
