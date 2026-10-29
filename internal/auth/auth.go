@@ -25,6 +25,12 @@ type session struct {
 	Exp  int64  `json:"e"`
 }
 
+type siteSession struct {
+	Slug string `json:"s"`
+	Ver  string `json:"v"`
+	Exp  int64  `json:"e"`
+}
+
 func New(adminUser, adminPass, agentToken string) *Auth {
 	mac := hmac.New(sha256.New, []byte("pubit-session"))
 	mac.Write([]byte(adminUser))
@@ -98,6 +104,34 @@ func (a *Auth) RequestOK(r *http.Request) bool {
 	}
 	_, ok := a.SessionUser(r)
 	return ok
+}
+
+func (a *Auth) SetSiteSession(w http.ResponseWriter, slug, passHash string) {
+	raw, _ := json.Marshal(siteSession{Slug: slug, Ver: passHash, Exp: time.Now().Add(7 * 24 * time.Hour).Unix()})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "pubit_site_" + slug,
+		Value:    a.sign(string(raw)),
+		Path:     "/" + slug + "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   7 * 24 * 3600,
+	})
+}
+
+func (a *Auth) SiteSessionOK(r *http.Request, slug, passHash string) bool {
+	c, err := r.Cookie("pubit_site_" + slug)
+	if err != nil || c.Value == "" {
+		return false
+	}
+	raw, ok := a.verify(c.Value)
+	if !ok {
+		return false
+	}
+	var s siteSession
+	if json.Unmarshal([]byte(raw), &s) != nil {
+		return false
+	}
+	return time.Now().Unix() <= s.Exp && s.Slug == slug && s.Ver == passHash
 }
 
 func (a *Auth) sign(payload string) string {

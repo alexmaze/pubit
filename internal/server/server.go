@@ -84,7 +84,7 @@ func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 		s.handleDav(w, r)
 		return
 	}
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
