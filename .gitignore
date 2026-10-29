@@ -1,0 +1,7 @@
+/data/
+/pubit
+/pubit.exe
+.env
+.DS_Store
+web/node_modules/
+*.log
