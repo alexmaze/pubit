@@ -17,6 +17,7 @@ import (
 	"pubit"
 	"pubit/internal/auth"
 	"pubit/internal/config"
+	"pubit/internal/files"
 	"pubit/internal/store"
 )
 
@@ -50,6 +51,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sites/{slug}/content", s.requireAuth(s.getContent))
 	mux.HandleFunc("POST /api/sites/{slug}/import", s.requireAuth(s.importZip))
 	mux.HandleFunc("GET /api/sites/{slug}/export", s.requireAuth(s.exportZip))
+	mux.HandleFunc("GET /api/sites/{slug}/tree", s.requireAuth(s.treeFiles))
+	mux.HandleFunc("GET /api/sites/{slug}/preview", s.requireAuth(s.previewSite))
+	mux.HandleFunc("GET /api/sites/{slug}/preview/{path...}", s.requireAuth(s.previewSite))
+	mux.HandleFunc("HEAD /api/sites/{slug}/preview", s.requireAuth(s.previewSite))
+	mux.HandleFunc("HEAD /api/sites/{slug}/preview/{path...}", s.requireAuth(s.previewSite))
 	mux.HandleFunc("GET /skill.md", s.skill)
 	mux.HandleFunc("GET /s/{code}", s.shortLink)
 	mux.Handle("/admin/", s.adminHandler())
@@ -234,6 +240,9 @@ func (s *Server) siteJSON(site store.Site) map[string]any {
 	if site.ShortCode != "" {
 		out["short_url"] = base + "/s/" + site.ShortCode
 	}
+	n, b, _ := files.Stats(s.siteRoot(site.Slug))
+	out["file_count"] = n
+	out["byte_size"] = b
 	return out
 }
 

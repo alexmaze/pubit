@@ -8,16 +8,18 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
 var ErrInvalidPath = errors.New("invalid path")
 
 type Entry struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Dir  bool   `json:"dir"`
-	Size int64  `json:"size"`
+	Name     string  `json:"name"`
+	Path     string  `json:"path"`
+	Dir      bool    `json:"dir"`
+	Size     int64   `json:"size"`
+	Children []Entry `json:"children,omitempty"`
 }
 
 func Resolve(root, rel string) (string, error) {
@@ -75,7 +77,59 @@ func List(root, rel string) ([]Entry, error) {
 		}
 		out = append(out, Entry{Name: e.Name(), Path: p, Dir: e.IsDir(), Size: size})
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Dir != out[j].Dir {
+			return out[i].Dir
+		}
+		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
+	})
 	return out, nil
+}
+
+func Tree(root, rel string) ([]Entry, error) {
+	entries, err := List(root, rel)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Entry{}, nil
+		}
+		return nil, err
+	}
+	for i := range entries {
+		if !entries[i].Dir {
+			continue
+		}
+		children, err := Tree(root, entries[i].Path)
+		if err != nil {
+			return nil, err
+		}
+		entries[i].Children = children
+	}
+	return entries, nil
+}
+
+func Stats(root string) (count int, bytes int64, err error) {
+	err = filepath.WalkDir(root, func(_ string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			if os.IsNotExist(walkErr) {
+				return nil
+			}
+			return walkErr
+		}
+		if d.IsDir() {
+			return nil
+		}
+		info, infoErr := d.Info()
+		if infoErr != nil {
+			return nil
+		}
+		count++
+		bytes += info.Size()
+		return nil
+	})
+	if os.IsNotExist(err) {
+		return 0, 0, nil
+	}
+	return count, bytes, err
 }
 
 func Mkdir(root, rel string) error {

@@ -21,15 +21,35 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
-    --radius: 0.6rem;
+    --radius: 0.75rem;
   }
 
   * {
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  html,
+  body,
+  #root {
+    min-height: 100%;
   }
+
+  body {
+    @apply bg-muted/30 text-foreground antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+.login-canvas {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, hsl(240 5% 92%), transparent),
+    linear-gradient(hsl(var(--border) / 0.7) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.7) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+}
+
+.code-gutter {
+  font-variant-numeric: tabular-nums;
 }

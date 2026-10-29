@@ -10,6 +10,8 @@ export type Site = {
   url: string;
   short_url?: string;
   dav_url: string;
+  file_count: number;
+  byte_size: number;
 };
 
 export type FileEntry = {
@@ -17,6 +19,7 @@ export type FileEntry = {
   path: string;
   dir: boolean;
   size: number;
+  children?: FileEntry[];
 };
 
 export class ApiError extends Error {
@@ -45,7 +48,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => req<{ ok: boolean }>("/api/health"),
-  me: () => req<{ user: string }>("/api/me"),
+  me: () => req<{ user: string; base_url: string }>("/api/me"),
   login: (username: string, password: string) =>
     req<{ user: string }>("/api/login", { method: "POST", body: JSON.stringify({ username, password }) }),
   logout: () => req<{ ok: boolean }>("/api/logout", { method: "POST" }),
@@ -73,6 +76,8 @@ export const api = {
   deleteSite: (slug: string) => req<{ ok: boolean }>(`/api/sites/${slug}`, { method: "DELETE" }),
   files: (slug: string, path = "") =>
     req<{ path: string; entries: FileEntry[] }>(`/api/sites/${slug}/files?path=${encodeURIComponent(path)}`),
+  tree: (slug: string) =>
+    req<{ entries: FileEntry[]; file_count: number; byte_size: number }>(`/api/sites/${slug}/tree`),
   mkdir: (slug: string, path: string) =>
     req<{ ok: boolean }>(`/api/sites/${slug}/files`, { method: "PUT", body: JSON.stringify({ path, dir: true }) }),
   writeFile: (slug: string, path: string, content: string) =>
@@ -92,4 +97,21 @@ export const api = {
     fd.append("file", file);
     return req<{ ok: boolean }>(`/api/sites/${slug}/import`, { method: "POST", body: fd });
   },
+  exportZip: async (slug: string) => {
+    const res = await fetch(`/api/sites/${slug}/export`, { credentials: "include" });
+    if (!res.ok) throw new ApiError(res.status, "export failed");
+    return res.blob();
+  },
 };
+
+export function adminPreviewUrl(slug: string, path = "") {
+  const rel = path.replace(/^\/+/, "");
+  return `/api/sites/${slug}/preview/${rel}`;
+}
+
+export function publicPreviewUrl(site: Site, path = "") {
+  if (site.http_enabled && !site.has_password) {
+    return site.url + path.replace(/^\/+/, "");
+  }
+  return adminPreviewUrl(site.slug, path);
+}

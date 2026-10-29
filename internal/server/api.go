@@ -36,11 +36,11 @@ func (s *Server) logout(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request) {
+	user := "agent"
 	if u, ok := s.auth.SessionUser(r); ok {
-		writeJSON(w, http.StatusOK, map[string]string{"user": u})
-		return
+		user = u
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"user": "agent"})
+	writeJSON(w, http.StatusOK, map[string]string{"user": user, "base_url": s.cfg.BaseURL})
 }
 
 func (s *Server) listSites(w http.ResponseWriter, _ *http.Request) {
@@ -187,6 +187,23 @@ func (s *Server) deleteSite(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = os.RemoveAll(s.siteRoot(slug))
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *Server) treeFiles(w http.ResponseWriter, r *http.Request) {
+	if _, err := s.store.Get(r.PathValue("slug")); storeErr(w, err) {
+		return
+	}
+	root := s.siteRoot(r.PathValue("slug"))
+	entries, err := files.Tree(root, "")
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if entries == nil {
+		entries = []files.Entry{}
+	}
+	n, b, _ := files.Stats(root)
+	writeJSON(w, http.StatusOK, map[string]any{"entries": entries, "file_count": n, "byte_size": b})
 }
 
 func (s *Server) listFiles(w http.ResponseWriter, r *http.Request) {

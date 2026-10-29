@@ -46,7 +46,20 @@ func (s *Server) publicSite(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/"+slug+"/", http.StatusFound)
 		return
 	}
-	root := s.siteRoot(slug)
+	s.serveSite(w, r, site, rel)
+}
+
+func (s *Server) previewSite(w http.ResponseWriter, r *http.Request) {
+	site, err := s.store.Get(r.PathValue("slug"))
+	if storeErr(w, err) {
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	s.serveSite(w, r, site, r.PathValue("path"))
+}
+
+func (s *Server) serveSite(w http.ResponseWriter, r *http.Request, site store.Site, rel string) {
+	root := s.siteRoot(site.Slug)
 	full, err := files.Resolve(root, rel)
 	if err != nil {
 		http.NotFound(w, r)

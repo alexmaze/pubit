@@ -1,35 +1,29 @@
-import { FormEvent, useEffect, useState } from "react";
+import { Copy, ExternalLink, FolderKanban, HardDrive, MoreHorizontal, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { NewSiteDialog } from "@/components/NewSiteDialog";
+import { SiteFlags } from "@/components/StatusBadges";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ApiError, Site, api } from "@/lib/api";
+import { ApiError, type Site, api } from "@/lib/api";
+import { copyText, formatBytes, formatRelative, shareUrl } from "@/lib/utils";
 
-export function Sites({ onLogout }: { onLogout: () => void }) {
+export function Sites() {
   const nav = useNavigate();
   const [sites, setSites] = useState<Site[]>([]);
-  const [error, setError] = useState("");
+  const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
-  const [slug, setSlug] = useState("");
-  const [name, setName] = useState("");
-  const [shortCode, setShortCode] = useState("");
-  const [httpEnabled, setHttpEnabled] = useState(true);
-  const [spa, setSpa] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
       const data = await api.sites();
       setSites(data.sites || []);
-      setError("");
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        nav("/login");
-        return;
-      }
-      setError(err instanceof Error ? err.message : "failed to load");
+      if (err instanceof ApiError && err.status === 401) nav("/login");
+      else toast.error(err instanceof Error ? err.message : "failed to load");
     }
   }
 
@@ -37,114 +31,113 @@ export function Sites({ onLogout }: { onLogout: () => void }) {
     void load();
   }, []);
 
-  async function create(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return sites;
+    return sites.filter((site) => site.name.toLowerCase().includes(s) || site.slug.includes(s) || site.short_code.toLowerCase().includes(s));
+  }, [sites, q]);
+
+  async function toggleHttp(site: Site, next: boolean) {
     try {
-      const site = await api.createSite({
-        slug,
-        name,
-        short_code: shortCode || undefined,
-        http_enabled: httpEnabled,
-        spa_fallback: spa,
-      });
-      setOpen(false);
-      setSlug("");
-      setName("");
-      setShortCode("");
-      nav(`/sites/${site.slug}`);
+      const updated = await api.updateSite(site.slug, { http_enabled: next });
+      setSites((list) => list.map((item) => (item.slug === site.slug ? updated : item)));
+      toast.success(next ? "HTTP enabled" : "HTTP disabled");
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 409 ? "slug or short code already exists" : err instanceof Error ? err.message : "create failed");
-    } finally {
-      setBusy(false);
+      toast.error(err instanceof Error ? err.message : "update failed");
     }
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <header className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">pubit</h1>
-          <p className="text-sm text-muted-foreground">Sites</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Sites</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Static hosts for agents and quick shares.</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setOpen(true)}>New site</Button>
-          <Button variant="outline" onClick={onLogout}>
-            Sign out
-          </Button>
-        </div>
-      </header>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="overflow-hidden rounded-xl border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Slug</th>
-              <th className="px-4 py-3 font-medium">Short</th>
-              <th className="px-4 py-3 font-medium">HTTP</th>
-              <th className="px-4 py-3 font-medium">Password</th>
-              <th className="px-4 py-3 font-medium">Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sites.length === 0 && (
-              <tr>
-                <td className="px-4 py-8 text-center text-muted-foreground" colSpan={6}>
-                  No sites yet.
-                </td>
-              </tr>
-            )}
-            {sites.map((s) => (
-              <tr key={s.slug} className="border-t hover:bg-muted/40">
-                <td className="px-4 py-3">
-                  <Link className="font-medium hover:underline" to={`/sites/${s.slug}`}>
-                    {s.name}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 font-mono text-xs">{s.slug}</td>
-                <td className="px-4 py-3 font-mono text-xs">{s.short_code || "—"}</td>
-                <td className="px-4 py-3">{s.http_enabled ? "on" : "off"}</td>
-                <td className="px-4 py-3">{s.has_password ? "yes" : "—"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{s.updated_at.replace("T", " ").replace("Z", "")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Button onClick={() => setOpen(true)}>New site</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New site</DialogTitle>
-          </DialogHeader>
-          <form className="space-y-4" onSubmit={create}>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} required placeholder="hello" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Hello" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="short">Short code</Label>
-              <Input id="short" value={shortCode} onChange={(e) => setShortCode(e.target.value)} placeholder="auto if empty" />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="http">HTTP enabled</Label>
-              <Switch id="http" checked={httpEnabled} onCheckedChange={setHttpEnabled} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="spa">SPA fallback</Label>
-              <Switch id="spa" checked={spa} onCheckedChange={setSpa} />
-            </div>
-            <Button className="w-full" type="submit" disabled={busy}>
-              Create
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input className="pl-9" placeholder="Filter by name, slug, or short code" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-background px-6 py-16 text-center">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <FolderKanban className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="font-medium">{sites.length === 0 ? "No sites yet" : "No matches"}</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {sites.length === 0 ? "Create a site, drop a zip, and share a URL." : "Try another search."}
+          </p>
+          {sites.length === 0 && (
+            <Button className="mt-4" onClick={() => setOpen(true)}>
+              New site
             </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((site) => (
+            <article key={site.slug} className="rounded-2xl border bg-background p-4 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-2">
+                  <Link to={`/sites/${site.slug}`} className="text-base font-semibold tracking-tight hover:underline">
+                    {site.name}
+                  </Link>
+                  <SiteFlags site={site} />
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span>{site.file_count} files</span>
+                    <span className="inline-flex items-center gap-1">
+                      <HardDrive className="h-3 w-3" />
+                      {formatBytes(site.byte_size || 0)}
+                    </span>
+                    <span>Updated {formatRelative(site.updated_at)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="mr-1 hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
+                    HTTP
+                    <Switch checked={site.http_enabled} onCheckedChange={(v) => void toggleHttp(site, v)} />
+                  </div>
+                  <Button size="icon" variant="outline" asChild>
+                    <a href={site.url} target="_blank" rel="noreferrer" title="Open site">
+                      <ExternalLink />
+                    </a>
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    title="Copy share link"
+                    onClick={() => void copyText(shareUrl(site)).then(() => toast.success("Share link copied"))}
+                  >
+                    <Copy />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost">
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => nav(`/sites/${site.slug}`)}>Open workspace</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void copyText(site.dav_url).then(() => toast.success("WebDAV copied"))}>
+                        Copy WebDAV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void toggleHttp(site, !site.http_enabled)}>
+                        {site.http_enabled ? "Disable HTTP" : "Enable HTTP"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <NewSiteDialog open={open} onOpenChange={setOpen} />
     </div>
   );
 }
