@@ -9,18 +9,23 @@ Personal static web hosting for AI agents. Single Go binary with an embedded Rea
 ## Features
 
 - **Directory-isolated sites** — each `slug` maps to `sites/{slug}/`; paths stay inside the site root (`..` is rejected).
+- **Rich site metadata** — name, description, and author per site, searchable from the dashboard.
 - **Agent-native protocols** — `Bearer` token for the JSON API, HTTP Basic (`agent` + token) for WebDAV, or one-shot ZIP import/export.
 - **Sharing controls** — standalone password unlock page, auto or custom short links (`/s/{code}`), one-click HTTP toggle (WebDAV still works while Offline), and SPA `index.html` fallback.
-- **Built-in `/admin` workspace** — file tree, drag-and-drop upload/ZIP extract, inline code editor (`⌘S`), and desktop/mobile live preview.
+- **Built-in `/admin` workspace** — file tree, drag-and-drop upload/ZIP extract, inline code editor (`⌘S`), desktop/mobile live preview, and an **Agent Setup** drawer with a ready-to-send prompt and masked token.
 - **Single binary** — frontend and `skill/SKILL.md` are embedded via `go:embed`. Listens on HTTP `:8080`; put Caddy or Nginx in front for HTTPS.
 
 | Workspace & live preview | Inline editor |
 | --- | --- |
 | ![Workspace](docs/images/workspace.png) | ![Editor](docs/images/editor.png) |
 
-| Access & sharing drawer | Visitor password page |
+| Access & sharing drawer | Agent Setup drawer |
 | --- | --- |
-| ![Sharing](docs/images/sharing.png) | ![Password Unlock](docs/images/password-unlock.png) |
+| ![Sharing](docs/images/sharing.png) | ![Agent Setup](docs/images/agent-setup.png) |
+
+| Visitor password page |
+| --- |
+| ![Password Unlock](docs/images/password-unlock.png) |
 
 ## Quick Start
 

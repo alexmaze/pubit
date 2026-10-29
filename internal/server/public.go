@@ -85,6 +85,7 @@ func renderUnlock(w http.ResponseWriter, site store.Site, wrong bool) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/admin/favicon.svg" />
 <title>` + title + `</title>
 <style>
   * { box-sizing: border-box; }

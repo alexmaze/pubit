@@ -57,6 +57,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("HEAD /api/sites/{slug}/preview", s.requireAuth(s.previewSite))
 	mux.HandleFunc("HEAD /api/sites/{slug}/preview/{path...}", s.requireAuth(s.previewSite))
 	mux.HandleFunc("GET /skill.md", s.skill)
+	mux.HandleFunc("GET /favicon.ico", s.favicon)
+	mux.HandleFunc("GET /favicon.svg", s.favicon)
 	mux.HandleFunc("GET /s/{code}", s.shortLink)
 	mux.Handle("/admin/", s.adminHandler())
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +116,16 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 func (s *Server) skill(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 	_, _ = w.Write([]byte(pubit.SkillMD))
+}
+
+func (s *Server) favicon(w http.ResponseWriter, _ *http.Request) {
+	b, err := fs.ReadFile(pubit.WebDist, "web/dist/favicon.svg")
+	if err != nil {
+		http.NotFound(w, nil)
+		return
+	}
+	w.Header().Set("Content-Type", "image/svg+xml")
+	_, _ = w.Write(b)
 }
 
 func (s *Server) siteRoot(slug string) string {
@@ -177,7 +189,7 @@ func decodeJSON(r *http.Request, v any) error {
 
 func isReserved(slug string) bool {
 	switch slug {
-	case "", "admin", "api", "dav", "s":
+	case "", "admin", "api", "dav", "s", "favicon.ico", "favicon.svg":
 		return true
 	default:
 		return false

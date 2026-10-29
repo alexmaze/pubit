@@ -9,18 +9,23 @@
 ## 特性
 
 - **目录即站点**：每个 `slug` 对应独立目录，只托管静态产物，路径严格锁在站点内
+- **站点元信息**：支持名称、用途描述、创建人（如哪个 Agent 创建），可在列表中搜索筛选
 - **Agent 原生协议**：`Bearer` 调 REST 管理站点，WebDAV（`agent` + token）读写文件，或一键导入整个构建 ZIP
 - **分享控制**：独立密码解锁页、自动或自定义短链 `/s/{code}`、HTTP 一键上下线（Offline 时 WebDAV 仍可写）、SPA `index.html` 回退
-- **内置工作台 `/admin`**：文件树、拖拽上传/解压、在线改代码、桌面/手机实时预览
+- **内置工作台 `/admin`**：文件树、拖拽上传/解压、在线改代码、桌面/手机实时预览，以及右上角 **Agent Setup** 抽屉（自然语言安装指令 + 默认掩码的 Token 框）
 - **零外部依赖**：Go 单二进制 `go:embed` 前端与 `SKILL.md`；容器只听 `:8080`，HTTPS 交给前面的 Caddy / Nginx
 
 | 站点工作台与实时预览 | 在线编辑 |
 | --- | --- |
 | ![Workspace](docs/images/workspace.png) | ![Editor](docs/images/editor.png) |
 
-| 访问控制与短链抽屉 | 访客密码解锁页 |
+| 访问控制与短链抽屉 | Agent Setup 抽屉 |
 | --- | --- |
-| ![Sharing](docs/images/sharing.png) | ![Password Unlock](docs/images/password-unlock.png) |
+| ![Sharing](docs/images/sharing.png) | ![Agent Setup](docs/images/agent-setup.png) |
+
+| 访客密码解锁页 |
+| --- |
+| ![Password Unlock](docs/images/password-unlock.png) |
 
 ## 快速开始
 
