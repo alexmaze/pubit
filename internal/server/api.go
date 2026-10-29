@@ -40,7 +40,11 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	if u, ok := s.auth.SessionUser(r); ok {
 		user = u
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"user": user, "base_url": s.cfg.BaseURL})
+	writeJSON(w, http.StatusOK, map[string]string{
+		"user":        user,
+		"base_url":    s.cfg.BaseURL,
+		"agent_token": s.cfg.AgentToken,
+	})
 }
 
 func (s *Server) listSites(w http.ResponseWriter, _ *http.Request) {

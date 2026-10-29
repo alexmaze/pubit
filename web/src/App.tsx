@@ -12,6 +12,7 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [baseUrl, setBaseUrl] = useState("");
+  const [agentToken, setAgentToken] = useState("");
 
   useEffect(() => {
     api
@@ -19,6 +20,7 @@ export function App() {
       .then((me) => {
         setAuthed(true);
         setBaseUrl(me.base_url);
+        setAgentToken(me.agent_token);
       })
       .catch(() => setAuthed(false))
       .finally(() => setReady(true));
@@ -39,7 +41,7 @@ export function App() {
           path="/"
           element={
             authed ? (
-              <AppShell baseUrl={baseUrl} onLogout={logout}>
+              <AppShell baseUrl={baseUrl} agentToken={agentToken} onLogout={logout}>
                 <Sites baseUrl={baseUrl} />
               </AppShell>
             ) : (
@@ -51,7 +53,7 @@ export function App() {
           path="/sites/:slug"
           element={
             authed ? (
-              <AppShell full baseUrl={baseUrl} onLogout={logout}>
+              <AppShell full baseUrl={baseUrl} agentToken={agentToken} onLogout={logout}>
                 <SiteDetail baseUrl={baseUrl} />
               </AppShell>
             ) : (

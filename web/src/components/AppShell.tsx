@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 export function AppShell({
   children,
   baseUrl,
+  agentToken,
   onLogout,
   full,
 }: {
   children: ReactNode;
   baseUrl: string;
+  agentToken: string;
   onLogout: () => void;
   full?: boolean;
 }) {
@@ -39,7 +41,7 @@ export function AppShell({
         </div>
       </header>
       <div className={full ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "mx-auto w-full max-w-5xl px-4 py-8"}>{children}</div>
-      <AgentSetup open={setup} onOpenChange={setSetup} baseUrl={baseUrl} />
+      <AgentSetup open={setup} onOpenChange={setSetup} baseUrl={baseUrl} agentToken={agentToken} />
       <Toaster position="bottom-right" richColors />
     </div>
   );

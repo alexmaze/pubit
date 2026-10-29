@@ -50,7 +50,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => req<{ ok: boolean }>("/api/health"),
-  me: () => req<{ user: string; base_url: string }>("/api/me"),
+  me: () => req<{ user: string; base_url: string; agent_token: string }>("/api/me"),
   login: (username: string, password: string) =>
     req<{ user: string }>("/api/login", { method: "POST", body: JSON.stringify({ username, password }) }),
   logout: () => req<{ ok: boolean }>("/api/logout", { method: "POST" }),
