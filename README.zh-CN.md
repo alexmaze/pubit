@@ -93,7 +93,7 @@ Agent 触发该 skill 时会先检查环境变量（或 `.env`）里的 `PUBIT_B
 | `/admin` | 管理后台 SPA |
 | `/api/health` | 探活，返回 `{"ok":true}` |
 | `/api/sites` | `GET` 列表 / `POST` 创建站点（冲突返回 `409`） |
-| `/api/sites/{slug}` | `GET` 详情 / `PATCH` 改名、短链、密码、HTTP、SPA / `DELETE` 删除 |
+| `/api/sites/{slug}` | `GET` 详情 / `PATCH` 改名、描述、作者、短链、密码、HTTP、SPA / `DELETE` 删除 |
 | `/api/sites/{slug}/import` | `POST` 上传并解压整站 ZIP |
 | `/api/sites/{slug}/export` | `GET` 导出整站 ZIP |
 | `/dav/{slug}/` | 站点 WebDAV 根目录（Basic 用户名 `agent`，密码 `PUBIT_AGENT_TOKEN`） |

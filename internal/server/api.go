@@ -62,6 +62,8 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Slug        string `json:"slug"`
 		Name        string `json:"name"`
+		Description string `json:"description"`
+		Author      string `json:"author"`
 		ShortCode   string `json:"short_code"`
 		HTTPEnabled *bool  `json:"http_enabled"`
 		Password    string `json:"password"`
@@ -80,6 +82,8 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = req.Slug
 	}
+	description := strings.TrimSpace(req.Description)
+	author := strings.TrimSpace(req.Author)
 	short := strings.TrimSpace(req.ShortCode)
 	if short != "" && !validShort(short) {
 		writeErr(w, http.StatusBadRequest, "invalid short_code")
@@ -101,6 +105,8 @@ func (s *Server) createSite(w http.ResponseWriter, r *http.Request) {
 	site, err := s.store.Create(store.Site{
 		Slug:         req.Slug,
 		Name:         name,
+		Description:  description,
+		Author:       author,
 		ShortCode:    short,
 		HTTPEnabled:  httpOn,
 		PasswordHash: hash,
@@ -131,6 +137,8 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 	}
 	var req struct {
 		Name          *string `json:"name"`
+		Description   *string `json:"description"`
+		Author        *string `json:"author"`
 		ShortCode     *string `json:"short_code"`
 		HTTPEnabled   *bool   `json:"http_enabled"`
 		Password      *string `json:"password"`
@@ -148,6 +156,12 @@ func (s *Server) updateSite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		site.Name = name
+	}
+	if req.Description != nil {
+		site.Description = strings.TrimSpace(*req.Description)
+	}
+	if req.Author != nil {
+		site.Author = strings.TrimSpace(*req.Author)
 	}
 	if req.ShortCode != nil {
 		code := strings.TrimSpace(*req.ShortCode)

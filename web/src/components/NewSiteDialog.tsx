@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiError, api } from "@/lib/api";
 import { isZipFile } from "@/lib/files";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,8 @@ export function NewSiteDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const nav = useNavigate();
   const [slug, setSlug] = useState("");
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [author, setAuthor] = useState("");
   const [shortCode, setShortCode] = useState("");
   const [zip, setZip] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
@@ -22,6 +25,8 @@ export function NewSiteDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   function reset() {
     setSlug("");
     setName("");
+    setDescription("");
+    setAuthor("");
     setShortCode("");
     setZip(null);
     setError("");
@@ -35,6 +40,8 @@ export function NewSiteDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       const site = await api.createSite({
         slug,
         name,
+        description: description || undefined,
+        author: author || undefined,
         short_code: shortCode || undefined,
       });
       if (zip) {
@@ -71,6 +78,25 @@ export function NewSiteDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="space-y-2">
             <Label htmlFor="new-name">Name</Label>
             <Input id="new-name" value={name} placeholder="defaults to slug" onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-author">Author</Label>
+            <Input
+              id="new-author"
+              value={author}
+              placeholder="e.g. Cursor on Alex's MacBook"
+              onChange={(e) => setAuthor(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-description">Description</Label>
+            <Textarea
+              id="new-description"
+              className="min-h-[72px]"
+              value={description}
+              placeholder="Requirement or feature summary (shown in admin only)"
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="new-short">Short code</Label>

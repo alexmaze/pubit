@@ -1,6 +1,6 @@
 ---
 name: pubit
-description: Publish and update static sites on a personal pubit instance via REST and WebDAV. Use when the user wants to deploy, update, or take down a static site, or change its password, short link, HTTP switch, or SPA fallback.
+description: Publish and update static sites on a personal pubit instance via REST and WebDAV. Use when the user wants to deploy, update, or take down a static site, or change its metadata (description, author), password, short link, HTTP switch, or SPA fallback.
 ---
 
 # Pubit
@@ -9,7 +9,7 @@ Use this skill to publish or update a static site on the user's personal Pubit h
 
 ## When to use
 
-The user wants to publish, update, or take down a static web build, or change a site's password, short link, HTTP switch, or SPA fallback.
+The user wants to publish, update, or take down a static web build, or change a site's description, author, password, short link, HTTP switch, or SPA fallback.
 
 ## 1. Check configuration first
 
@@ -35,16 +35,23 @@ REST auth header: `Authorization: Bearer $PUBIT_AGENT_TOKEN`.
 Slug rules: lowercase `a-z`, `0-9`, and internal `-` (max 64 chars). Reserved: `admin`, `api`, `dav`, `s`.  
 Short code rules: `a-z`, `A-Z`, `0-9`, `-` (max 32 chars).
 
+### Metadata conventions (`description` & `author`)
+
+Every site supports `description` and `author` (displayed only in the `/admin` dashboard, never on the public site). Whenever you create or update a site, always populate or maintain these two fields:
+
+- **`description`**: Summarize the requirement, feature, or purpose of this site (e.g., `"Interactive prototype for QZone feed detail aggregator card animation"`).
+- **`author`**: Write your own agent signature including your agent/tool name and the host machine name (e.g., `"Cursor on Alex's Macbook"`, `"Claude Code on Alex's MacBook"`).
+
 Create a site (`409` if slug or short code already exists — ask the user for another name, never overwrite):
 
 ```bash
 curl -fsS -X POST "$PUBIT_BASE_URL/api/sites" \
   -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"slug":"hello","name":"Hello","http_enabled":true}'
+  -d '{"slug":"hello","name":"Hello","description":"Landing page prototype for feature X","author":"Cursor on Alex'\''s Macbook","http_enabled":true}'
 ```
 
-Create fields: `slug` (required), `name`, `short_code` (auto-generated if omitted), `http_enabled` (default `true`), `password`, `spa_fallback`.
+Create fields: `slug` (required), `name`, `description` (requirement/feature summary), `author` (agent signature, e.g. `Cursor on Alex's Macbook`), `short_code` (auto-generated if omitted), `http_enabled` (default `true`), `password`, `spa_fallback`.
 
 List / get / delete:
 
@@ -98,10 +105,10 @@ curl -fsS "$PUBIT_BASE_URL/api/sites/hello/export" \
 curl -fsS -X PATCH "$PUBIT_BASE_URL/api/sites/hello" \
   -H "Authorization: Bearer $PUBIT_AGENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"short_code":"hi","password":"share-secret","http_enabled":true,"spa_fallback":true}'
+  -d '{"description":"Updated feature spec & interactive demo","author":"Cursor on Alex'\''s Macbook","short_code":"hi","password":"share-secret","http_enabled":true,"spa_fallback":true}'
 ```
 
-Patch fields (all optional): `name`, `short_code`, `http_enabled`, `password`, `clear_password` (bool, removes the password), `spa_fallback`.
+Patch fields (all optional): `name`, `description` (requirement/feature summary, pass `""` to clear), `author` (agent signature, e.g. `Cursor on Alex's Macbook`, pass `""` to clear), `short_code`, `http_enabled`, `password`, `clear_password` (bool, removes the password), `spa_fallback`.
 
 - When `http_enabled` is `false`, browsers get `404` at `/{slug}/`, while REST and WebDAV keep working.
 - When `password` is set, visitors see a password prompt page at `/{slug}/` and unlock the site with that password.

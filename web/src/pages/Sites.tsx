@@ -1,4 +1,4 @@
-import { Copy, ExternalLink, FolderKanban, HardDrive, MoreHorizontal, Search, Settings2 } from "lucide-react";
+import { Copy, ExternalLink, FolderKanban, HardDrive, MoreHorizontal, Search, Settings2, User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -37,7 +37,14 @@ export function Sites({ baseUrl }: { baseUrl: string }) {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return sites;
-    return sites.filter((site) => site.name.toLowerCase().includes(s) || site.slug.includes(s) || site.short_code.toLowerCase().includes(s));
+    return sites.filter(
+      (site) =>
+        site.name.toLowerCase().includes(s) ||
+        site.slug.includes(s) ||
+        site.short_code.toLowerCase().includes(s) ||
+        (site.description || "").toLowerCase().includes(s) ||
+        (site.author || "").toLowerCase().includes(s),
+    );
   }, [sites, q]);
 
   async function toggleHttp(site: Site, next: boolean) {
@@ -62,7 +69,7 @@ export function Sites({ baseUrl }: { baseUrl: string }) {
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Filter by name, slug, or short code" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Input className="pl-9" placeholder="Filter by name, slug, author, or description" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       {filtered.length === 0 ? (
@@ -89,8 +96,17 @@ export function Sites({ baseUrl }: { baseUrl: string }) {
                   <Link to={`/sites/${site.slug}`} className="text-base font-semibold tracking-tight hover:underline">
                     {site.name}
                   </Link>
+                  {site.description && (
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{site.description}</p>
+                  )}
                   <SiteFlags site={site} />
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    {site.author && (
+                      <span className="inline-flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {site.author}
+                      </span>
+                    )}
                     <span>{site.file_count} files</span>
                     <span className="inline-flex items-center gap-1">
                       <HardDrive className="h-3 w-3" />

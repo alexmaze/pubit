@@ -230,6 +230,8 @@ func (s *Server) siteJSON(site store.Site) map[string]any {
 	out := map[string]any{
 		"slug":         site.Slug,
 		"name":         site.Name,
+		"description":  site.Description,
+		"author":       site.Author,
 		"short_code":   site.ShortCode,
 		"http_enabled": site.HTTPEnabled,
 		"has_password": site.PasswordHash != "",

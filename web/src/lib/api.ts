@@ -1,6 +1,8 @@
 export type Site = {
   slug: string;
   name: string;
+  description: string;
+  author: string;
   short_code: string;
   http_enabled: boolean;
   has_password: boolean;
@@ -57,6 +59,8 @@ export const api = {
   createSite: (body: {
     slug: string;
     name?: string;
+    description?: string;
+    author?: string;
     short_code?: string;
     http_enabled?: boolean;
     password?: string;
@@ -66,6 +70,8 @@ export const api = {
     slug: string,
     body: {
       name?: string;
+      description?: string;
+      author?: string;
       short_code?: string;
       http_enabled?: boolean;
       password?: string;

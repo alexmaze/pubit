@@ -93,7 +93,7 @@ When invoked, the skill checks `PUBIT_BASE_URL` and `PUBIT_AGENT_TOKEN` in the e
 | `/admin` | Admin SPA |
 | `/api/health` | Health check (`{"ok":true}`) |
 | `/api/sites` | `GET` list / `POST` create site (`409` on slug or short code conflict) |
-| `/api/sites/{slug}` | `GET` detail / `PATCH` name, short code, password, HTTP, SPA / `DELETE` site |
+| `/api/sites/{slug}` | `GET` detail / `PATCH` name, description, author, short code, password, HTTP, SPA / `DELETE` site |
 | `/api/sites/{slug}/import` | `POST` upload and extract a site ZIP |
 | `/api/sites/{slug}/export` | `GET` download the site as a ZIP |
 | `/dav/{slug}/` | Site WebDAV root (Basic user `agent`, password `PUBIT_AGENT_TOKEN`) |

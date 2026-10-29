@@ -19,6 +19,8 @@ var (
 type Site struct {
 	Slug         string
 	Name         string
+	Description  string
+	Author       string
 	ShortCode    string
 	HTTPEnabled  bool
 	PasswordHash string
@@ -40,6 +42,8 @@ func Open(path string) (*Store, error) {
 		CREATE TABLE IF NOT EXISTS sites (
 			slug TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
+			description TEXT NOT NULL DEFAULT '',
+			author TEXT NOT NULL DEFAULT '',
 			short_code TEXT UNIQUE,
 			http_enabled INTEGER NOT NULL DEFAULT 1,
 			password_hash TEXT NOT NULL DEFAULT '',
@@ -51,13 +55,48 @@ func Open(path string) (*Store, error) {
 		_ = db.Close()
 		return nil, err
 	}
+	for _, col := range []string{"description", "author"} {
+		if err := ensureColumn(db, "sites", col, "TEXT NOT NULL DEFAULT ''"); err != nil {
+			_ = db.Close()
+			return nil, err
+		}
+	}
 	return &Store{db: db}, nil
+}
+
+func ensureColumn(db *sql.DB, table, column, def string) error {
+	rows, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", table))
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			cid       int
+			name      string
+			ctype     string
+			notnull   int
+			dfltValue sql.NullString
+			pk        int
+		)
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+			return err
+		}
+		if name == column {
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	_, err = db.Exec(fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, column, def))
+	return err
 }
 
 func (s *Store) Close() error { return s.db.Close() }
 
 func (s *Store) List() ([]Site, error) {
-	rows, err := s.db.Query(`SELECT slug, name, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites ORDER BY updated_at DESC`)
+	rows, err := s.db.Query(`SELECT slug, name, description, author, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites ORDER BY updated_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +113,7 @@ func (s *Store) List() ([]Site, error) {
 }
 
 func (s *Store) Get(slug string) (Site, error) {
-	row := s.db.QueryRow(`SELECT slug, name, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites WHERE slug = ?`, slug)
+	row := s.db.QueryRow(`SELECT slug, name, description, author, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites WHERE slug = ?`, slug)
 	site, err := scanSite(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Site{}, ErrNotFound
@@ -83,7 +122,7 @@ func (s *Store) Get(slug string) (Site, error) {
 }
 
 func (s *Store) GetByShortCode(code string) (Site, error) {
-	row := s.db.QueryRow(`SELECT slug, name, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites WHERE short_code = ?`, code)
+	row := s.db.QueryRow(`SELECT slug, name, description, author, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at FROM sites WHERE short_code = ?`, code)
 	site, err := scanSite(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Site{}, ErrNotFound
@@ -103,8 +142,8 @@ func (s *Store) Create(site Site) (Site, error) {
 		site.ShortCode = code
 	}
 	_, err := s.db.Exec(
-		`INSERT INTO sites (slug, name, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		site.Slug, site.Name, nullIfEmpty(site.ShortCode), boolInt(site.HTTPEnabled), site.PasswordHash, boolInt(site.SPAFallback),
+		`INSERT INTO sites (slug, name, description, author, short_code, http_enabled, password_hash, spa_fallback, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		site.Slug, site.Name, site.Description, site.Author, nullIfEmpty(site.ShortCode), boolInt(site.HTTPEnabled), site.PasswordHash, boolInt(site.SPAFallback),
 		site.CreatedAt.Format(time.RFC3339Nano), site.UpdatedAt.Format(time.RFC3339Nano),
 	)
 	if isUnique(err) {
@@ -116,8 +155,8 @@ func (s *Store) Create(site Site) (Site, error) {
 func (s *Store) Update(site Site) (Site, error) {
 	site.UpdatedAt = time.Now().UTC()
 	res, err := s.db.Exec(
-		`UPDATE sites SET name = ?, short_code = ?, http_enabled = ?, password_hash = ?, spa_fallback = ?, updated_at = ? WHERE slug = ?`,
-		site.Name, nullIfEmpty(site.ShortCode), boolInt(site.HTTPEnabled), site.PasswordHash, boolInt(site.SPAFallback),
+		`UPDATE sites SET name = ?, description = ?, author = ?, short_code = ?, http_enabled = ?, password_hash = ?, spa_fallback = ?, updated_at = ? WHERE slug = ?`,
+		site.Name, site.Description, site.Author, nullIfEmpty(site.ShortCode), boolInt(site.HTTPEnabled), site.PasswordHash, boolInt(site.SPAFallback),
 		site.UpdatedAt.Format(time.RFC3339Nano), site.Slug,
 	)
 	if isUnique(err) {
@@ -187,7 +226,7 @@ func scanSite(row rowScanner) (Site, error) {
 		created   string
 		updated   string
 	)
-	err := row.Scan(&site.Slug, &site.Name, &short, &httpOn, &site.PasswordHash, &spa, &created, &updated)
+	err := row.Scan(&site.Slug, &site.Name, &site.Description, &site.Author, &short, &httpOn, &site.PasswordHash, &spa, &created, &updated)
 	if err != nil {
 		return Site{}, err
 	}

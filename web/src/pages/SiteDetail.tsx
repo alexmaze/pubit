@@ -1,4 +1,4 @@
-import { ArchiveRestore, Copy, Download, ExternalLink, FilePlus, FolderPlus, Settings2, Trash2, Upload } from "lucide-react";
+import { ArchiveRestore, Copy, Download, ExternalLink, FilePlus, FolderPlus, Settings2, Trash2, Upload, User } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -127,7 +127,16 @@ export function SiteDetail({ baseUrl }: { baseUrl: string }) {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-lg font-semibold tracking-tight">{site.name}</h1>
               <SiteFlags site={site} />
+              {site.author && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  {site.author}
+                </span>
+              )}
             </div>
+            {site.description && (
+              <p className="max-w-3xl text-xs text-muted-foreground">{site.description}</p>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" asChild>

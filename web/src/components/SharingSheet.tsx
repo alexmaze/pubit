@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiError, type Site, api } from "@/lib/api";
 import { copyText, randomShort, shareUrl } from "@/lib/utils";
 
@@ -37,6 +38,8 @@ export function SharingSheet({
 }) {
   const nav = useNavigate();
   const [name, setName] = useState(site.name);
+  const [description, setDescription] = useState(site.description || "");
+  const [author, setAuthor] = useState(site.author || "");
   const [shortCode, setShortCode] = useState(site.short_code);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -45,8 +48,10 @@ export function SharingSheet({
 
   useEffect(() => {
     setName(site.name);
+    setDescription(site.description || "");
+    setAuthor(site.author || "");
     setShortCode(site.short_code);
-  }, [site.name, site.short_code, open]);
+  }, [site.name, site.description, site.author, site.short_code, open]);
 
   async function patch(body: Parameters<typeof api.updateSite>[1], ok = "Saved") {
     setBusy(true);
@@ -70,7 +75,7 @@ export function SharingSheet({
 
   async function saveMeta(e: FormEvent) {
     e.preventDefault();
-    await patch({ name, short_code: shortCode });
+    await patch({ name, description, author, short_code: shortCode }, "Site details saved");
   }
 
   return (
@@ -79,7 +84,7 @@ export function SharingSheet({
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Access & sharing</SheetTitle>
-            <SheetDescription>HTTP, password, short link, and agent connection for this site.</SheetDescription>
+            <SheetDescription>Metadata, HTTP, password, short link, and agent connection for this site.</SheetDescription>
           </SheetHeader>
           <SheetBody className="space-y-6">
             <form className="space-y-3" onSubmit={saveMeta}>
@@ -87,8 +92,27 @@ export function SharingSheet({
                 <Label htmlFor="site-name">Name</Label>
                 <Input id="site-name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="site-author">Author</Label>
+                <Input
+                  id="site-author"
+                  value={author}
+                  placeholder="e.g. Cursor on Alex's MacBook"
+                  onChange={(e) => setAuthor(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="site-description">Description</Label>
+                <Textarea
+                  id="site-description"
+                  className="min-h-[72px]"
+                  value={description}
+                  placeholder="Requirement or feature summary (shown in admin only)"
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
               <Button type="submit" size="sm" disabled={busy}>
-                Save name
+                Save details
               </Button>
             </form>
 
